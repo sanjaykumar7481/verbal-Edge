@@ -74,7 +74,7 @@ const ResumeParser = (props) => {
     formData.append('file', file);
     setLoading(true); 
     try {
-      const response = await axios.post('http://localhost:4000/ai/upload', formData, {
+      const response = await axios.post(`${process.env.ENDPOINT}/ai/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
