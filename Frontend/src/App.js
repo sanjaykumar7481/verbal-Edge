@@ -1,8 +1,7 @@
 // App.js
 import PropTypes from 'prop-types';
-import React, { useEffect } from 'react';
-import axios from 'axios';
-import { Route, Routes, Navigate, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Route, Routes, Navigate } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { useUser } from './Authenticator/Usercontext'; // Import UserContext
 // import dotenv from 'dotenv';
@@ -24,42 +23,14 @@ import NonAuthLayout from './components/NonAuthLayout';
 import './assets/scss/theme.scss';
 // dotenv.config();
 const App = (props) => {
-  const { user,setUser } = useUser(); // Access user state from UserContext
-  const navigate=useNavigate();
-  // console.log(process.env.ENDPOINT)
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Check if user is authenticated
-        const token=localStorage.getItem("authUser");
-
-        if (token) {
-          // Fetch data from the API using Axios with JWT token
-          const response = await axios.get(`http://localhost:4000/api/getuser`, {
-            headers: {
-              Authorization: `${token}`
-            }
-          });
-
-          // Set the fetched user data to state
-          // console.log(response.data);
-          setUser(response.data.user);
-          //localStorage.setItem("UserData",response.data);
-        }
-      } catch (error) {
-        if(error.response.status===401 || error.response.status===404)
-          {
-            setUser(null);
-            localStorage.removeItem("authUser");
-            navigate('login')
-          }
-        // console.error('Error fetching data:', error);
-      }
-    };
-
-    // Call the fetchData function
-    fetchData();
-  }, []);
+  const { user, loading } = useUser(); // Access user state from UserContext
+  if (loading) {
+    return (
+      <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100vh" }}>
+        <div className="text-muted">Loading...</div>
+      </div>
+    );
+  }
   function getLayout() {
     let layoutCls = VerticalLayout;
     switch (props.layout.layoutType) {
@@ -83,12 +54,12 @@ const App = (props) => {
           key={idx}
           path={route.path}
           element={
-            user ? (
+            route.path === "/logout" ? (
+              route.component
+            ) : user ? (
               <Navigate to="/dashboard" />
             ) : (
-              <NonAuthLayout>
-                {route.component}
-              </NonAuthLayout>
+              <NonAuthLayout>{route.component}</NonAuthLayout>
             )
           }
         />

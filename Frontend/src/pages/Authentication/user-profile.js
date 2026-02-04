@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Container,
   Row,
@@ -18,14 +18,14 @@ import * as Yup from "yup";
 import { useFormik } from "formik";
 
 //redux
-import { useSelector, useDispatch } from "react-redux";
-import { createSelector } from "reselect";
+import { useDispatch } from "react-redux";
 import withRouter from "components/Common/withRouter";
 
+import { useUser } from "Authenticator/Usercontext";
 
 import user1 from "../../assets/images/users/user-1.jpg";
 // actions
-import { editProfile, resetProfileFlag } from "../../store/actions";
+import { editProfile } from "../../store/actions";
 
 const UserProfile = () => {
 
@@ -33,18 +33,13 @@ const UserProfile = () => {
   document.title = "Profile | Skote - React Admin & Dashboard";
 
   const dispatch = useDispatch();
+  const { user } = useUser();
 
-  const [email, setemail] = useState("");
-  const [name, setname] = useState("");
+  const [email, setemail] = useState(user?.email || "");
+  const [name, setname] = useState(user?.first_name || "");
   const [idx, setidx] = useState(1);
   const [error,seterror]=useState(null);
   const [success,setsuccess]=useState(null)
-
-  useEffect(() => {
-    if (localStorage.getItem("authUser")) {
-      
-    }
-  }, []);
 
   const validation = useFormik({
     // enableReinitialize : use this flag when initial values needs to be changed

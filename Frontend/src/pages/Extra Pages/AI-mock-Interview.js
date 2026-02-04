@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Card, CardBody, CardTitle, CardText, Button, Progress } from 'reactstrap';
+import { Card, CardBody, CardTitle, CardText, Button, Progress, Badge, Container, Row, Col } from 'reactstrap';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import Knob from 'pages/AllCharts/knob/knob';
 import { setBreadcrumbItems } from "../../store/actions";
@@ -64,7 +64,7 @@ const ResumeParser = (props) => {
 
   useEffect(() => {
       props.setBreadcrumbItems('AI Interview', breadcrumbItems)
-  })
+  }, [props])
   const handleSubmit = async () => {
     if(file===null){
       alert("please upload the file");
@@ -74,7 +74,7 @@ const ResumeParser = (props) => {
     formData.append('file', file);
     setLoading(true); 
     try {
-      const response = await axios.post(`${process.env.ENDPOINT}/ai/upload`, formData, {
+      const response = await axios.post(`http://localhost:4000/ai/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -131,11 +131,11 @@ const ResumeParser = (props) => {
       console.log(cleanquestionsArray);
       // Extract only the questions
       setQuestions(cleanquestionsArray);
-      setListeningStates(new Array(questionsArray.length).fill(false))
-      setSubmittedAnswers(Array(questionsArray.length).fill(false));
-      setAnswers(new Array(questionsArray.length).fill('')); // Initialize answers array
-      if(questionsArray.length>0){
-        console.log(questionsArray)
+      setListeningStates(new Array(cleanquestionsArray.length).fill(false))
+      setSubmittedAnswers(Array(cleanquestionsArray.length).fill(false));
+      setAnswers(new Array(cleanquestionsArray.length).fill('')); // Initialize answers array
+      if(cleanquestionsArray.length>0){
+        console.log(cleanquestionsArray)
         setwaitingquestions(false)
       }
     // }
@@ -192,7 +192,7 @@ const ResumeParser = (props) => {
           setvalue_cur(i);
         }, i * 30); // Increment value every 10 milliseconds
       }
-      const endpoint='https://YOUR-RESOURCE-NAME.cognitiveservices.azure.com';
+      const endpoint = process.env.REACT_APP_AZURE_TEXT_ANALYTICS_ENDPOINT;
       const response = await axios.post(`${endpoint}/text/analytics/v3.0/sentiment`, {
         documents: answers.map((value, index) => ({
           id: index,
@@ -201,7 +201,7 @@ const ResumeParser = (props) => {
       }, {
           headers: {
               'Content-Type': 'application/json',
-              'Ocp-Apim-Subscription-Key': 'REDACTED_AZURE_KEY'
+              'Ocp-Apim-Subscription-Key': process.env.REACT_APP_AZURE_TEXT_ANALYTICS_KEY
           }
       });
       console.log(response.data);
@@ -224,157 +224,284 @@ setneutralScore(prevNeutralScore =>parseInt(prevNeutralScore * 100))
   }
   
   }
-  return (
-    <>
-      {showChart?<>
-      {positiveScore==0 && negativeScore==0 && neutralScore==0?<>
-      <div className="overlay">
-          <div className="text-center" dir="ltr">
-            <h5 className="font-size-14 mb-3">Loading results</h5>
-            <Knob
-              value={value_cur}
-              height={200}
-              width={150}
-              fgColor="#4ac18e"
-              cursor={true}
-              displayCustom={() => {
-                return false
-              }}
-              onChange={handleChangecursor}
-            />
-          </div>
-        </div>
-        </>:<>
-        <div className='d-flex justify-content-around'>
-        <div className="text-center" dir="ltr">
-                    <h5 className="font-size-14 mb-3">positive Score</h5>
-                    <Knob
-                      value={positiveScore}
-                      fgColor="#23c403"
-                      lineCap="round"
-                      height={200}
-                      width={150}
-                      onChange={e => {
-                        
-                      }}
-                    />
-                  </div>
-                  <div className="text-center" dir="ltr">
-                    <h5 className="font-size-14 mb-3">negative Score</h5>
-                    <Knob
-                      value={negativeScore}
-                      fgColor="#ea553d"
-                      lineCap="round"
-                      height={200}
-                      width={150}
-                      onChange={e => {
-                        
-                      }}
-                    />
-                  </div>
-                  <div className="text-center" dir="ltr">
-                    <h5 className="font-size-14 mb-3">neutral Score</h5>
-                    <Knob
-                      value={neutralScore}
-                      fgColor="#e27aff"
-                      lineCap="round"
-                      height={200}
-                      width={150}
-                      onChange={e => {
-                        
-                      }}
-                    />
-                  </div>
-                  </div>
-                  <center><Button color='primary'onClick={Update_Test_Count}>submit report</Button></center>
-        </>}</>:
-      <>
-      {questions.length === 0 ? <>
-      <div>
-        <div className="form-group">
-          <label className="form-lable">Upload Resume</label>
-          <div className='d-flex '>
-          <input type="file" className="form-control form-control-file mr-2" required={true} style={{maxWidth:'400px',minWidth:'150px'}} onChange={handleFileChange} data-input="false" data-buttonname="btn-Seconday" color='Danger' />
-          <Button onClick={handleSubmit}>Upload</Button>
-          </div>
-      </div>
-      {loading ? (
-            <>
-            <br />
-            <span>Scanning resume</span>
-            <Progress striped animated color="bg-primary"  value={formprogress}>
-            {formprogress}%
-        </Progress></>
-        ) : (<>
-        {!loading && isparsed?<><br /><center><Button onClick={()=>{getQuestion();setwaitingquestions(true);setParsed(false)}}>Ask Questions</Button></center></>:<></> }
-        {waitingForquestions?<>
-          <br /><br />
-            <span>Loading</span>
-            <Progress striped animated color='success' value={questionprogress}></Progress>
-        </>:<></>}
-        </>
+  const hasQuestions = questions.length > 0;
+  const isAnalyzing = showChart && positiveScore === 0 && negativeScore === 0 && neutralScore === 0;
+  const getWordCount = (value) => {
+    if (!value) return 0;
+    return value.trim().split(/\s+/).filter(Boolean).length;
+  };
 
-        )}
-        </div>
-      </> : <>
-            
-                {questions.map((question, index) => (
-                  <Card key={index}>
-                    <CardBody>
-                      <CardTitle className="h4">Question {index + 1}</CardTitle>
-                      <CardText>{question}</CardText>
-                      <textarea
-                        rows="4"
-                        style={{ width: '100%' }}
-                        value={answers[index]}
-                        disabled={submittedAnswers[index]}
-                        onChange={(e) => handleAnswerChange(index, e.target.value)}
-                        required='true'
+  return (
+    <Container fluid className="py-3">
+      {showChart ? (
+        <>
+          {isAnalyzing ? (
+            <div className="overlay">
+              <div className="text-center" dir="ltr">
+                <h5 className="font-size-14 mb-3">Analyzing responses</h5>
+                <Knob
+                  value={value_cur}
+                  height={200}
+                  width={150}
+                  fgColor="#4ac18e"
+                  cursor={true}
+                  displayCustom={() => {
+                    return false
+                  }}
+                  onChange={handleChangecursor}
+                />
+              </div>
+            </div>
+          ) : (
+            <>
+              <Row className="align-items-center mb-3">
+                <Col>
+                  <h4 className="mb-0">Interview Report</h4>
+                  <small className="text-muted">Sentiment across written and spoken responses</small>
+                </Col>
+                <Col className="text-end">
+                  <Button color="primary" onClick={Update_Test_Count}>Submit report</Button>
+                </Col>
+              </Row>
+              <Row className="g-3">
+                <Col md="4">
+                  <Card className="h-100">
+                    <CardBody className="text-center" dir="ltr">
+                      <h6 className="font-size-14 mb-3">Positive Score</h6>
+                      <Knob
+                        value={positiveScore}
+                        fgColor="#23c403"
+                        lineCap="round"
+                        height={200}
+                        width={150}
+                        onChange={() => {}}
                       />
-                      <div className='d-flex justify-content-between'>
-                      <Button 
-                      disabled={submittedAnswers[index]}
-                      onClick={() => {
-                        SetIndex(index);
-                        handleSpeechRecognition(index);
-                        setListeningStates(prevState => {
-                          const updatedListeningStates = [...prevState];
-                          updatedListeningStates[index] = !updatedListeningStates[index];
-                          return updatedListeningStates;
-                        });
-                      }}>
-                        {Listening[index] ? 'Stop' : 'Start'} Speech Recognition
-                  </Button>
-                  <Button color={submittedAnswers[index]?'success':'danger'} disabled={submittedAnswers[index]}onClick={()=>{
-                 
-                  setSubmittedAnswers(prevState => {
-                    const updatedListeningStates = [...prevState];
-                    updatedListeningStates[index] = true;
-                    return updatedListeningStates;
-                  });
-                  }}>
-                    
-                    {submittedAnswers[index]?'submitted ':'submit'}
-                    </Button></div>
+                      <div className="mt-2">
+                        <Badge color="success">{positiveScore}%</Badge>
+                      </div>
                     </CardBody>
                   </Card>
-                ))}
-                <center>
-                {positiveScore === null ? (
-                      <Button color='primary' onClick={SubmitAnswers}>Print report</Button>
-                    ) : (
-                      <Button color='primary' onClick={Update_Test_Count}>Submit report</Button>
-                    )}
-                  
-                  </center>
-                
-              </>
-            }
+                </Col>
+                <Col md="4">
+                  <Card className="h-100">
+                    <CardBody className="text-center" dir="ltr">
+                      <h6 className="font-size-14 mb-3">Negative Score</h6>
+                      <Knob
+                        value={negativeScore}
+                        fgColor="#ea553d"
+                        lineCap="round"
+                        height={200}
+                        width={150}
+                        onChange={() => {}}
+                      />
+                      <div className="mt-2">
+                        <Badge color="danger">{negativeScore}%</Badge>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Col>
+                <Col md="4">
+                  <Card className="h-100">
+                    <CardBody className="text-center" dir="ltr">
+                      <h6 className="font-size-14 mb-3">Neutral Score</h6>
+                      <Knob
+                        value={neutralScore}
+                        fgColor="#e27aff"
+                        lineCap="round"
+                        height={200}
+                        width={150}
+                        onChange={() => {}}
+                      />
+                      <div className="mt-2">
+                        <Badge color="secondary">{neutralScore}%</Badge>
+                      </div>
+                    </CardBody>
+                  </Card>
+                </Col>
+              </Row>
+              <Row className="mt-3">
+                <Col lg="8">
+                  <Card>
+                    <CardBody>
+                      <h6 className="mb-2">Interpretation</h6>
+                      <p className="text-muted mb-0">
+                        Higher positive scores suggest confident, constructive phrasing.
+                        Negative or neutral signals may highlight areas to clarify or expand.
+                      </p>
+                    </CardBody>
+                  </Card>
+                </Col>
+                <Col lg="4">
+                  <Card className="h-100">
+                    <CardBody>
+                      <h6 className="mb-2">Next Step</h6>
+                      <p className="text-muted mb-3">Submit your report to save the results.</p>
+                      <Button color="primary" onClick={Update_Test_Count}>Save Report</Button>
+                    </CardBody>
+                  </Card>
+                </Col>
+              </Row>
             </>
-          }
-      </>
-      
-        
+          )}
+        </>
+      ) : (
+        <>
+          {!hasQuestions ? (
+            <Row className="g-3">
+              <Col lg="7">
+                <Card>
+                  <CardBody>
+                    <CardTitle className="h5 mb-2">Step 1: Upload Resume</CardTitle>
+                    <CardText className="text-muted">We use your resume to generate tailored AI interview and written test questions.</CardText>
+                    <div className="d-flex flex-wrap gap-2 align-items-center">
+                      <input
+                        type="file"
+                        className="form-control form-control-file"
+                        required={true}
+                        style={{ maxWidth: '420px', minWidth: '200px' }}
+                        onChange={handleFileChange}
+                        data-input="false"
+                        data-buttonname="btn-Seconday"
+                        color="Danger"
+                      />
+                      <Button color="primary" onClick={handleSubmit}>Upload</Button>
+                    </div>
+                    {loading ? (
+                      <>
+                        <div className="mt-3">Scanning resume</div>
+                        <Progress striped animated color="bg-primary" value={formprogress}>
+                          {formprogress}%
+                        </Progress>
+                      </>
+                    ) : (
+                      <>
+                        {!loading && isparsed ? (
+                          <div className="mt-3 d-flex align-items-center gap-2">
+                            <Badge color="success">Resume parsed</Badge>
+                            <Button color="dark" onClick={() => { getQuestion(); setwaitingquestions(true); setParsed(false) }}>
+                              Generate Questions
+                            </Button>
+                          </div>
+                        ) : null}
+                        {waitingForquestions ? (
+                          <>
+                            <div className="mt-3">Generating interview</div>
+                            <Progress striped animated color="success" value={questionprogress}></Progress>
+                          </>
+                        ) : null}
+                      </>
+                    )}
+                  </CardBody>
+                </Card>
+              </Col>
+              <Col lg="5">
+                <Card className="h-100">
+                  <CardBody>
+                    <CardTitle className="h5 mb-2">What to Expect</CardTitle>
+                    <CardText className="text-muted mb-2">
+                      The interview blends spoken responses with a written test. You can answer by typing or speaking.
+                    </CardText>
+                    <ul className="mb-0">
+                      <li>AI interview questions tailored to your resume</li>
+                      <li>Written responses saved per question</li>
+                      <li>Sentiment analysis summary at the end</li>
+                    </ul>
+                  </CardBody>
+                </Card>
+              </Col>
+            </Row>
+          ) : (
+            <>
+              <Row className="mb-3 align-items-center">
+                <Col>
+                  <h4 className="mb-0">AI Interview + Written Test</h4>
+                  <small className="text-muted">Answer each question by typing or speaking, then submit when done.</small>
+                </Col>
+                <Col className="text-end">
+                  <Badge color="info">{questions.length} Questions</Badge>
+                </Col>
+              </Row>
+              <Row className="g-3">
+                {questions.map((question, index) => (
+                  <Col lg="6" key={index}>
+                    <Card className="h-100">
+                      <CardBody>
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <CardTitle className="h6 mb-0">Question {index + 1}</CardTitle>
+                          <Badge color={submittedAnswers[index] ? 'success' : 'warning'}>
+                            {submittedAnswers[index] ? 'Submitted' : 'In progress'}
+                          </Badge>
+                        </div>
+                        <CardText className="mb-3">
+                          <Badge color="primary" className="me-2">AI Interview</Badge>
+                          {question}
+                        </CardText>
+                        <Card className="bg-light border">
+                          <CardBody>
+                            <div className="d-flex justify-content-between align-items-center">
+                              <CardTitle className="h6 mb-1">Written Test Response</CardTitle>
+                              <Badge color="secondary">{getWordCount(answers[index])} words</Badge>
+                            </div>
+                            <CardText className="small text-muted mb-2">
+                              Write a clear, structured response. You can also use speech to draft your answer.
+                            </CardText>
+                            <textarea
+                              rows="5"
+                              className="form-control"
+                              value={answers[index]}
+                              disabled={submittedAnswers[index]}
+                              onChange={(e) => handleAnswerChange(index, e.target.value)}
+                              required="true"
+                            />
+                          </CardBody>
+                        </Card>
+                        <div className="d-flex flex-wrap gap-2 justify-content-between mt-3">
+                          <Button
+                            color={Listening[index] ? 'danger' : 'primary'}
+                            disabled={submittedAnswers[index]}
+                            onClick={() => {
+                              SetIndex(index);
+                              handleSpeechRecognition(index);
+                              setListeningStates(prevState => {
+                                const updatedListeningStates = [...prevState];
+                                updatedListeningStates[index] = !updatedListeningStates[index];
+                                return updatedListeningStates;
+                              });
+                            }}
+                          >
+                            {Listening[index] ? 'Stop' : 'Start'} Speech Draft
+                          </Button>
+                          <Button
+                            color={submittedAnswers[index] ? 'success' : 'dark'}
+                            disabled={submittedAnswers[index]}
+                            onClick={() => {
+                              setSubmittedAnswers(prevState => {
+                                const updatedListeningStates = [...prevState];
+                                updatedListeningStates[index] = true;
+                                return updatedListeningStates;
+                              });
+                            }}
+                          >
+                            {submittedAnswers[index] ? 'Submitted' : 'Submit Answer'}
+                          </Button>
+                        </div>
+                      </CardBody>
+                    </Card>
+                  </Col>
+                ))}
+              </Row>
+              <div className="text-center mt-4">
+                {positiveScore === null ? (
+                  <Button color="primary" onClick={SubmitAnswers}>Generate Report</Button>
+                ) : (
+                  <Button color="primary" onClick={Update_Test_Count}>Submit Report</Button>
+                )}
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </Container>
   );
 };
 export default  connect(null, { setBreadcrumbItems })(ResumeParser);

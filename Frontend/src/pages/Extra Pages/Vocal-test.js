@@ -7,6 +7,8 @@ import { connect } from "react-redux";
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { useUser } from 'Authenticator/Usercontext';
 import { useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import './vocaltest.css';
 const VocalTest = (props) => {
     const [userResponse, setUserResponse] = useState('');
     const [question, setQuestion] = useState('');
@@ -139,10 +141,20 @@ const VocalTest = (props) => {
         }
     }
     return (
-        <>
+        <div className="vocal-test">
             {!testStarted && !loadingResults && !results &&(
-                <div className="text-center mt-4">
-                    <Button color="primary" onClick={startTest}>Start Test</Button>
+                <div className="vocal-test__hero">
+                    <Card className="vocal-test__card">
+                        <CardBody className="text-center">
+                            <div className="vocal-test__title">Vocal Fluency Test</div>
+                            <div className="vocal-test__subtitle">
+                                Read the prompt aloud and we will analyze accuracy against the original text.
+                            </div>
+                            <Button color="primary" className="vocal-test__cta" onClick={startTest}>
+                                Start Test
+                            </Button>
+                        </CardBody>
+                    </Card>
                 </div>
             )}
             {testStarted && !loadingResults && (
@@ -153,50 +165,67 @@ const VocalTest = (props) => {
                         <span>Loading text...</span>
                     </div>
                 ) : (
-                    <Card>
-                        <CardBody>
-                            <div className='d-flex justify-content-between mb-4'>
-                                <h2 className="text-center">Voice Test</h2>
-                                <div className="timer mr-3">
-                                    <i className="ion ion-md-alarm mr-2" style={{ fontSize: '25px', fontWeight: 'bold' }}></i>
-                                    <span style={{ fontSize: '24px', fontWeight: 'bold', color: timer < 60 ? 'red' : 'black' }}>
-                                        {formatTime()}
-                                    </span>
-                                </div>
+                    <div className="vocal-test__stage">
+                        <div className="vocal-test__header">
+                            <div>
+                                <div className="vocal-test__eyebrow">SpeakEZ</div>
+                                <h2 className="vocal-test__heading">Voice Test</h2>
+                                <div className="vocal-test__help">Speak clearly and at a steady pace.</div>
                             </div>
-                            <div className="mb-3">
-                                <p style={{ fontSize: '14px' }}>{question}</p>
+                            <div className={`vocal-test__timer ${timer < 60 ? 'is-urgent' : ''}`}>
+                                <i className="ion ion-md-alarm mr-2"></i>
+                                {formatTime()}
                             </div>
-                            {!listening && (
-                                <div className="text-center">
-                                    <Button color="primary" className="mt-2" onClick={startListeningToUser}>Start Speaking</Button>
-                                </div>
-                            )}
-                            {listening && (
-                                <div className="text-center">
-                                    <h3 className="mt-2">Listening....</h3>
-                                </div>
-                            )}
-                            <br />
-                            <textarea
-                                rows="8"
-                                style={{ width: '100%' }}
-                                value={listening ? userResponse + transcript : userResponse}
-                                onChange={(e) => { }}
-                            />
-
-                            <div className='text-center'>
-                                <Button onClick={stopListeningAndHandleSubmit}>Submit</Button>
-                            </div>
-
-                            {/* Display Results after Submission */}
-                        </CardBody>
-                    </Card>
+                        </div>
+                        <div className="vocal-test__grid">
+                            <Card className="vocal-test__card">
+                                <CardBody>
+                                    <div className="vocal-test__label">Prompt</div>
+                                    <div className="vocal-test__prompt">
+                                        <ReactMarkdown>{question}</ReactMarkdown>
+                                    </div>
+                                </CardBody>
+                            </Card>
+                            <Card className="vocal-test__card">
+                                <CardBody>
+                                    <div className="vocal-test__label">Speech Controls</div>
+                                    <div className="vocal-test__controls">
+                                        {!listening ? (
+                                            <Button color="primary" onClick={startListeningToUser}>
+                                                Start Speaking
+                                            </Button>
+                                        ) : (
+                                            <Button color="danger" onClick={stopListeningAndHandleSubmit}>
+                                                Stop and Submit
+                                            </Button>
+                                        )}
+                                        <div className={`vocal-test__listening ${listening ? 'is-on' : ''}`}>
+                                            <span className="vocal-test__dot" />
+                                            {listening ? 'Listening…' : 'Not listening'}
+                                        </div>
+                                    </div>
+                                    <div className="vocal-test__label vocal-test__label--spaced">Live Transcript</div>
+                                    <textarea
+                                        rows="8"
+                                        className="vocal-test__textarea"
+                                        value={listening ? userResponse + transcript : userResponse}
+                                        readOnly
+                                        placeholder="Your spoken words will appear here…"
+                                    />
+                                    <div className="text-center">
+                                        <Button color="secondary" onClick={stopListeningAndHandleSubmit}>
+                                            Submit
+                                        </Button>
+                                    </div>
+                                </CardBody>
+                            </Card>
+                        </div>
+                    </div>
                 )
             )}
             {loadingResults && (
-                <div className="overlay">
-                    <div className="text-center" dir="ltr">
+                <div className="vocal-test__overlay">
+                    <div className="vocal-test__overlay-card text-center" dir="ltr">
                         <h5 className="font-size-14 mb-3">Loading results</h5>
                         <Knob
                             value={value_cur}
@@ -213,27 +242,34 @@ const VocalTest = (props) => {
                 </div>
             )}
             {results && value_cur === 100 && !loadingResults && (
-            <div className="results-container text-center">
-                <h5 className="font-size-14 mb-3">Results:</h5>
-                <div>
-                    <p>
-                        <strong>Matched Words:</strong> {results.matchedWords.join(', ')}
-                    </p>
-                    <p>
-                        <strong>Mismatched Words:</strong> {results.mismatchedWords.join(', ')}
-                    </p>
-                    <p>
-                        <strong>Matched Count:</strong> {results.matchedCount} &nbsp;&nbsp;
-                        <strong> Mismatched Count:</strong> {results.mismatchedCount} &nbsp;&nbsp;
-                        <strong> Accuracy:</strong> {results.accuracy}%
-                    </p>
-                </div>
-                <Button color="primary" className="mt-2" onClick={() => { Update_test_result() }}>
-                    Save Test
-                </Button>
+            <div className="vocal-test__results">
+                <Card className="vocal-test__card">
+                    <CardBody>
+                        <div className="vocal-test__label">Results</div>
+                        <div className="vocal-test__score">
+                            <div className="vocal-test__score-value">{results.accuracy}%</div>
+                            <div className="vocal-test__score-meta">
+                                Matched: {results.matchedCount} · Mismatched: {results.mismatchedCount}
+                            </div>
+                        </div>
+                        <div className="vocal-test__label vocal-test__label--spaced">Matched Words</div>
+                        <div className="vocal-test__tags">
+                            {results.matchedWords.map((word, index) => (
+                                <span className="vocal-test__tag vocal-test__tag--good" key={`m-${index}`}>
+                                    {word}
+                                </span>
+                            ))}
+                        </div>
+                        <div className="text-center">
+                            <Button color="primary" className="mt-2" onClick={() => { Update_test_result() }}>
+                                Save Test
+                            </Button>
+                        </div>
+                    </CardBody>
+                </Card>
             </div>
         )}
-        </>
+        </div>
     );
 };
 

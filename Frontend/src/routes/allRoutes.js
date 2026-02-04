@@ -94,14 +94,14 @@ import UiColors from "pages/Ui/UiColors"
 import UiOffcanvas from "pages/Ui/UiOffcanvas"
 import Chat from "pages/Chat/Chat";
 import Kanban from "pages/Kanban"
-import SpeakTest from "pages/Extra Pages/Speak-Test"
+import WrittenTest from "pages/Extra Pages/Written-Test"
 import VocalTest from "pages/Extra Pages/Vocal-test"
 
 const userRoutes = [
   { path: "/dashboard", component: <Dashboard /> },
   { path: "/profile", component: <UserProfile /> },
   {path:"/resumeAI",component:<ResumeParser />},
-  {path:"/Speak-test",component:<SpeakTest />},
+  {path:"/Speak-test",component:<WrittenTest />},
   {path:"/vocal-test",component:<VocalTest />},
 
   //calendar

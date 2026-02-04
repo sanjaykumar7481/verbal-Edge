@@ -70,7 +70,7 @@ const WETQuestion=async(req,res)=>{
     try{
     async function run() {
         
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
         
         const result = await model.generateContent(prompt);
@@ -97,7 +97,7 @@ const Getquestions=async(req,res)=>{
         //console.log(prompt);
         async function run() {
             const response = await axios.post(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
                 {
                     contents: [
                         {
@@ -132,34 +132,8 @@ const Getquestions=async(req,res)=>{
         res.status(500).send('Internal Server Error');
     }
 }
-// const checkSpelling = async (text, subscriptionKey) => {
-//     const apiUrl = 'https://spellcheckk.cognitiveservices.azure.com/bing/v7.0/SpellCheck';
-//     const headers = {
-//         'Ocp-Apim-Subscription-Key': 'REDACTED_AZURE_KEY',
-//         'Content-Type': 'application/x-www-form-urlencoded'
-//     };
-//     const params = new URLSearchParams();
-//     params.append('text', text);
-//     try {
-//         const response = await axios.post(apiUrl, params, { headers });
-//         if (response.status === 200) {
-//             const data = response.data;
-//             // console.log(data)
-//             if (data.flaggedTokens && data.flaggedTokens.length > 0) {
-//                 const misspelledWords = data.flaggedTokens.map(token => ({
-//                     word: token.token,
-//                     suggested: token.suggestions ? token.suggestions[0].suggestion : null
-//                 }));
-//                 console.log(misspelledWords);
-//                 return misspelledWords;
-//             }
-//         }
-//         return [];
-//     } catch (error) {
-//         console.error('Error checking spelling:', error);
-//         return [];
-//     }
-// };
+
+
 const checkSpelling = async (sentence) => {
 
     //console.log();
@@ -271,7 +245,7 @@ const RandomText=async(req,res)=>{
     try{
     async function run() {
         
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
         
         const result = await model.generateContent(prompt);
