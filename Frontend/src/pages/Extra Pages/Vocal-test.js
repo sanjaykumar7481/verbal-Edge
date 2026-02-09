@@ -9,6 +9,7 @@ import { useUser } from 'Authenticator/Usercontext';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import './vocaltest.css';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 const VocalTest = (props) => {
     const [userResponse, setUserResponse] = useState('');
     const [question, setQuestion] = useState('');
@@ -90,7 +91,7 @@ const VocalTest = (props) => {
     }, [testStarted, timer]);
 
     const fetchQuestion = () => {
-        axios.get(`http://localhost:4000/ai/Random-text`)
+        axios.get(`${API_BASE_URL}/ai/Random-text`)
             .then(response => {
                 setQuestion(response.data.Random_Text);
             })
@@ -120,7 +121,7 @@ const VocalTest = (props) => {
           }
         const singleParagraphResponse = userResponse.replace(/\n/g, ' ').trim();
         console.log(singleParagraphResponse);
-        axios.post(`http://localhost:4000/ai/Vocal-Score`, { 
+        axios.post(`${API_BASE_URL}/ai/Vocal-Score`, { 
             actualText: question,
             transcribedText: singleParagraphResponse })
             .then(response => {
@@ -134,7 +135,7 @@ const VocalTest = (props) => {
             });
     };
     const Update_test_result=async()=>{
-        const response=await axios.post(`http://localhost:4000/api/TestCount`,Testcount);
+        const response=await axios.post(`${API_BASE_URL}/api/TestCount`,Testcount);
         if(response.data)
         {
             navigator('/dashboard')

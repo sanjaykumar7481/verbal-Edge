@@ -8,6 +8,7 @@ import { connect } from "react-redux"
 import { useUser } from 'Authenticator/Usercontext';
 import { useNavigate } from 'react-router-dom';
 import { time } from 'echarts';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 const WrittenTest = (props) => {
     const {user}=useUser();
     const navigator=useNavigate();
@@ -62,7 +63,7 @@ const WrittenTest = (props) => {
         }
     }, [testStarted, timer]);
     const fetchQuestion = () => {
-        axios.get('http://localhost:4000/ai/WET-random-question')
+        axios.get(`${API_BASE_URL}/ai/WET-random-question`)
             .then(response => {
                 setQuestion(response.data.question);
                 console.log(response.data.question);
@@ -88,7 +89,7 @@ const WrittenTest = (props) => {
             }, i * 100); // Increment value every 10 milliseconds
           }
           const singleParagraphResponse = userResponse.replace(/\n/g, ' ').trim();
-        axios.post(`http://localhost:4000/ai/English-Score`, { userResponse:singleParagraphResponse })
+        axios.post(`${API_BASE_URL}/ai/English-Score`, { userResponse:singleParagraphResponse })
             .then(response => {
                 console.log(response.data)
                 setResults(response.data); // Assuming response.data contains the results you want to display
@@ -121,7 +122,7 @@ const WrittenTest = (props) => {
     };
     const remainingPercent = Math.max(0, Math.min(100, Math.round((timer / 300) * 100)));
     const Update_test_result=async()=>{
-        const response=await axios.post(`http://localhost:4000/api/TestCount`,Testcount);
+        const response=await axios.post(`${API_BASE_URL}/api/TestCount`,Testcount);
         if(response.data)
         {
             navigator('/dashboard')

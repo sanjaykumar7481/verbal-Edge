@@ -7,6 +7,7 @@ import { setBreadcrumbItems } from "../../store/actions";
 import { connect } from "react-redux"
 import { useUser } from 'Authenticator/Usercontext';
 import { useNavigate } from 'react-router-dom';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
 const ResumeParser = (props) => {
   const {user}=useUser();
   const navigator=useNavigate();
@@ -74,7 +75,7 @@ const ResumeParser = (props) => {
     formData.append('file', file);
     setLoading(true); 
     try {
-      const response = await axios.post(`http://localhost:4000/ai/upload`, formData, {
+      const response = await axios.post(`${API_BASE_URL}/ai/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -115,7 +116,7 @@ const ResumeParser = (props) => {
       // while(questionsArray.length===0)
       // {
       //console.log(parsedData);
-      const response = await axios.post(`http://localhost:4000/ai/getquestions`, parsedData,{
+      const response = await axios.post(`${API_BASE_URL}/ai/getquestions`, parsedData,{
         onUploadProgress: progressEvent => {
           const progress = (progressEvent.loaded / progressEvent.total) * 100;
           setquestionprogress(progress)
@@ -153,7 +154,7 @@ const ResumeParser = (props) => {
     setAnswers(newAnswers);
   };
   const Update_Test_Count=async()=>{
-    const response=await axios.post(`http://localhost:4000/api/TestCount`,Testcount);
+    const response=await axios.post(`${API_BASE_URL}/api/TestCount`,Testcount);
     if(response.data)
       {
         navigator('/dashboard')
